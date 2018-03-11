@@ -1,3 +1,5 @@
+import anecdoteService from '../services/anecdotes'
+
 const getId = () => (100000 * Math.random()).toFixed(0)
 
 const anecdoteReducer = (store = [], action) => {
@@ -14,6 +16,7 @@ const anecdoteReducer = (store = [], action) => {
     return action.data
   }
   if (action.type === 'NEW_ANECDOTE') {
+    console.log('reducer', action.data)
     return [
       ...store,
       { content: action.data.content, id: action.data.id, votes: 0 }
@@ -31,23 +34,28 @@ export const createAnecdote = content => {
 }
 
 export const voteAnecdote = id => {
-  return {
-    type: 'VOTE',
-    id
+  return async dispatch => {
+    const anecdotes = await anecdoteService.getAll()
+    const anecdote = anecdotes.find(anecdote => anecdote.id === id)
+    await anecdoteService.updateAnecdote({
+      ...anecdote,
+      votes: anecdote.votes + 1
+    })
+    dispatch({ type: 'VOTE', id: anecdote.id })
   }
 }
 
-export const anecdoteInitialization = data => {
-  return {
-    type: 'INIT_ANECDOTES',
-    data
+export const anecdoteInitialization = () => {
+  return async dispatch => {
+    const anecdotes = await anecdoteService.getAll()
+    dispatch({ type: 'INIT_ANECDOTES', data: anecdotes })
   }
 }
 
 export const anecdoteCreation = data => {
-  return {
-    type: 'NEW_ANECDOTE',
-    data
+  return async dispatch => {
+    const newAnecdote = await anecdoteService.createNew(data)
+    dispatch({ type: 'NEW_ANECDOTE', data: newAnecdote })
   }
 }
 
